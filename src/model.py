@@ -78,7 +78,7 @@ class CommonLitBertBaseModel(torch.nn.Module):
 
     def evaluate(self, data, criterion):
         text = data["text"]
-        target = data["target"]
+        target = data["target"].to(self.device)
         y_pred = self.forward(text)
         return criterion(y_pred, target)
 
