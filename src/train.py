@@ -8,7 +8,6 @@ from . import dispatcher
 from . import model
 
 TRAINING_DATA = os.environ.get("TRAINING_DATA")
-TEST_DATA = os.environ.get("TEST_DATA")
 FOLD = int(os.environ.get("FOLD"))
 
 MODEL = os.environ.get("MODEL")
@@ -36,8 +35,8 @@ def train():
     train_df = train_df["excerpt"]
     valid_df = valid_df["excerpt"]
 
-    train_data = dataset.TextDataset(train_df.to_list(), ytrain)
-    valid_data = dataset.TextDataset(valid_df.to_list(), yvalid)
+    train_data = dataset.TextDataset(train_df.to_list()[:4], ytrain)
+    valid_data = dataset.TextDataset(valid_df.to_list()[:4], yvalid)
 
     # data is ready to train
     predictor = model.CommonLitBertBaseModel(

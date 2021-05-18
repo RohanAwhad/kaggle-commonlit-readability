@@ -81,3 +81,12 @@ class CommonLitBertBaseModel(torch.nn.Module):
         target = data["target"]
         y_pred = self.forward(text)
         return criterion(y_pred, target)
+
+    def predict(self, data_seq, batch_size=16):
+        with torch.no_grad():
+            predictions = torch.empty((0, 1))
+            for i in tqdm(range(0, len(data_seq), batch_size), leave=False):
+                pred = self.forward(list(data_seq[i : i + batch_size])).cpu()
+                predictions = torch.cat([predictions, pred], axis=0)
+
+        return predictions

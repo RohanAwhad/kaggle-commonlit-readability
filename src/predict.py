@@ -1,34 +1,30 @@
 import os
 import pandas as pd
-from sklearn import ensemble
-from sklearn import preprocessing
-from sklearn import metrics
-import joblib
 import numpy as np
+import torch
 
+from . import config
 from . import dispatcher
+from . import model
+
+TEST_DATA = os.environ.get("TEST_DATA")
+MODEL = os.environ.get("MODEL")
 
 
-def predict(test_data_path, model_type, model_path):
-    df = pd.read_csv(test_data_path)
+def predict(model_path):
+    df = pd.read_csv(TEST_DATA)
+    df = df[["id", "excerpt"]]
     test_idx = df["id"].values
+    test_excerpts = tuple(df["excerpt"].to_list())
     predictions = None
 
     for FOLD in range(5):
-        df = pd.read_csv(test_data_path)
-        encoders = joblib.load(os.path.join(
-            model_path, f"{model_type}_{FOLD}_label_encoder.pkl"))
-        cols = joblib.load(os.path.join(
-            model_path, f"{model_type}_{FOLD}_columns.pkl"))
-        for c in encoders:
-            lbl = encoders[c]
-            df.loc[:, c] = df.loc[:, c].astype(str).fillna("NONE")
-            df.loc[:, c] = lbl.transform(df[c].values.tolist())
-
-        clf = joblib.load(os.path.join(model_path, f"{model_type}_{FOLD}.pkl"))
-
-        df = df[cols]
-        preds = clf.predict_proba(df)[:, 1]
+        df = pd.read_csv(TEST_DATA)
+        predictor = model.CommonLitBertBaseModel(
+            dispatcher.MODELS[MODEL], config.DEVICE
+        )
+        predictor.load_state_dict(torch.load(f"{model_path}/{MODEL}_{FOLD}_5.pt"))
+        preds = predictor.predict(test_excerpts)
 
         if FOLD == 0:
             predictions = preds
@@ -37,14 +33,12 @@ def predict(test_data_path, model_type, model_path):
 
     predictions /= 5
 
-    sub = pd.DataFrame(np.column_stack(
-        (test_idx, predictions)), columns=["id", "target"])
+    sub = pd.DataFrame(
+        np.column_stack((test_idx, predictions)), columns=["id", "target"]
+    )
     return sub
 
 
 if __name__ == "__main__":
-    submission = predict(test_data_path="../input/test.csv",
-                         model_type="randomforest",
-                         model_path="../models/")
-    submission.loc[:, "id"] = submission.loc[:, "id"].astype(int)
-    submission.to_csv(f"../results/rf_submission.csv", index=False)
+    submission = predict(model_path="models/")
+    submission.to_csv(f"results/{MODEL}_submission.csv", index=False)
