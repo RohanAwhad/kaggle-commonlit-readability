@@ -35,8 +35,8 @@ def train():
     train_df = train_df["excerpt"]
     valid_df = valid_df["excerpt"]
 
-    train_data = dataset.TextDataset(train_df.to_list()[:4], ytrain)
-    valid_data = dataset.TextDataset(valid_df.to_list()[:4], yvalid)
+    train_data = dataset.TextDataset(train_df.to_list(), ytrain)
+    valid_data = dataset.TextDataset(valid_df.to_list(), yvalid)
 
     # data is ready to train
     predictor = model.CommonLitBertBaseModel(
