@@ -24,6 +24,7 @@ def predict(model_path):
             dispatcher.MODELS[MODEL], config.DEVICE
         )
         predictor.load_state_dict(torch.load(f"{model_path}/{MODEL}_{FOLD}_5.pt"))
+        predictor.to(config.DEVICE)
         preds = predictor.predict(test_excerpts)
 
         if FOLD == 0:
